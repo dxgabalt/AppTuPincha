@@ -18,7 +18,7 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_11)
         }
     }
-    
+
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
         moduleName = "composeApp"
@@ -38,12 +38,13 @@ kotlin {
         }
         binaries.executable()
     }
-    
+
     sourceSets {
-        
+
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
+            implementation(libs.ktor.client.okhttp)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -54,6 +55,28 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtime.compose)
+            implementation(libs.voyager.navigator)
+            implementation(libs.voyager.transitions)
+            implementation(libs.voyager.tabNavigator)
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.negotiation)
+            implementation(libs.kotlin.serialization)
+            implementation(libs.settings)
+            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
+            implementation("media.kamel:kamel-image:1.0.3")
+            // Cliente HTTP de Ktor (necesario para Kamel)
+            implementation("io.ktor:ktor-client-core:2.3.4")
+            implementation("io.ktor:ktor-client-cio:2.3.4")  // Para multiplataforma
+            // Soporte adicional para deserialización (opcional si se requiere)
+            implementation("io.ktor:ktor-client-json:2.3.4")
+            implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.4")
+            // Corrutinas multiplataforma (por si aún no están agregadas)
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+            implementation(platform("io.github.jan-tennert.supabase:bom:3.0.3"))
+            implementation("io.github.jan-tennert.supabase:storage-kt")
+            implementation("io.github.jan-tennert.supabase:postgrest-kt")
+            implementation("io.github.jan-tennert.supabase:auth-kt")
+            implementation("io.github.jan-tennert.supabase:realtime-kt")
         }
     }
 }
