@@ -9,9 +9,18 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    kotlin("plugin.serialization") version "1.8.20"
 }
 
+
 kotlin {
+    jvm {
+    }
+    androidTarget()
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
+
     androidTarget {
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
@@ -40,43 +49,62 @@ kotlin {
     }
 
     sourceSets {
+        val commonMain by getting {
+            dependencies {
+                // --- Compose ---
+                implementation(compose.runtime)
+                implementation(compose.foundation)
+                implementation(compose.material)
+                implementation(compose.ui)
+                implementation(compose.components.resources)
+                implementation(compose.components.uiToolingPreview)
 
-        androidMain.dependencies {
-            implementation(compose.preview)
-            implementation(libs.androidx.activity.compose)
-            implementation(libs.ktor.client.okhttp)
+                // --- ViewModel & State Management ---
+                implementation(libs.androidx.lifecycle.viewmodel)
+                implementation(libs.androidx.lifecycle.runtime.compose)
+
+                // --- Voyager Navigation ---
+                implementation(libs.voyager.navigator)
+                implementation(libs.voyager.transitions)
+                implementation(libs.voyager.tabNavigator)
+
+                // --- Ktor ---
+                implementation("io.ktor:ktor-client-core:2.3.4")
+                implementation("io.ktor:ktor-client-js:2.3.4")
+
+                implementation("io.ktor:ktor-client-json:2.3.4")
+                implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.4")
+
+                // --- Kotlin Serialization ---
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+
+                // --- Multiplatform Settings ---
+                implementation(libs.settings)
+
+                // --- Supabase (BOM para versiones sincronizadas) ---
+                implementation(platform("io.github.jan-tennert.supabase:bom:3.0.3"))
+                implementation("io.github.jan-tennert.supabase:postgrest-kt")
+                implementation("io.github.jan-tennert.supabase:auth-kt")
+                implementation("io.github.jan-tennert.supabase:realtime-kt")
+                implementation("io.github.jan-tennert.supabase:storage-kt")
+
+                // --- Corrutinas (multiplataforma) ---
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+
+                // --- Kotlinx DateTime ---
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
+
+                // --- Kamel para imágenes ---
+                implementation("media.kamel:kamel-image:1.0.3")
+            }
         }
-        commonMain.dependencies {
-            implementation(compose.runtime)
-            implementation(compose.foundation)
-            implementation(compose.material)
-            implementation(compose.ui)
-            implementation(compose.components.resources)
-            implementation(compose.components.uiToolingPreview)
-            implementation(libs.androidx.lifecycle.viewmodel)
-            implementation(libs.androidx.lifecycle.runtime.compose)
-            implementation(libs.voyager.navigator)
-            implementation(libs.voyager.transitions)
-            implementation(libs.voyager.tabNavigator)
-            implementation(libs.ktor.client.core)
-            implementation(libs.ktor.client.negotiation)
-            implementation(libs.kotlin.serialization)
-            implementation(libs.settings)
-            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
-            implementation("media.kamel:kamel-image:1.0.3")
-            // Cliente HTTP de Ktor (necesario para Kamel)
-            implementation("io.ktor:ktor-client-core:2.3.4")
-            implementation("io.ktor:ktor-client-cio:2.3.4")  // Para multiplataforma
-            // Soporte adicional para deserialización (opcional si se requiere)
-            implementation("io.ktor:ktor-client-json:2.3.4")
-            implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.4")
-            // Corrutinas multiplataforma (por si aún no están agregadas)
-            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
-            implementation(platform("io.github.jan-tennert.supabase:bom:3.0.3"))
-            implementation("io.github.jan-tennert.supabase:storage-kt")
-            implementation("io.github.jan-tennert.supabase:postgrest-kt")
-            implementation("io.github.jan-tennert.supabase:auth-kt")
-            implementation("io.github.jan-tennert.supabase:realtime-kt")
+
+        val androidMain by getting {
+            dependencies {
+                implementation(compose.preview)
+                implementation(libs.androidx.activity.compose)
+                implementation("io.ktor:ktor-client-okhttp:2.3.4")
+            }
         }
     }
 }
@@ -111,4 +139,3 @@ android {
 dependencies {
     debugImplementation(compose.uiTooling)
 }
-

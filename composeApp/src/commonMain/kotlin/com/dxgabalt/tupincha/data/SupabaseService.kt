@@ -2,18 +2,23 @@ package com.dxgabalt.tupincha.data
 
 import com.dxgabalt.tupincha.model.*
 import io.github.jan.supabase.SupabaseClient
-import io.github.jan.supabase.createSupabaseClient
-import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
+import io.github.jan.supabase.createSupabaseClient
+import io.github.jan.supabase.postgrest.Postgrest
+import io.github.jan.supabase.postgrest.decode
+import io.github.jan.supabase.postgrest.execute
+import io.github.jan.supabase.postgrest.filter.eq
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
+import io.github.jan.supabase.postgrest.query.Returning
 import io.github.jan.supabase.realtime.Realtime
 import io.github.jan.supabase.storage.storage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+
 
 object SupabaseService {
 
@@ -30,6 +35,52 @@ object SupabaseService {
         install(Realtime)
     }
 
+    suspend fun crearUsuarioAuth(correo: String, contrasena: String): String {
+        val resultado = client.auth.signUpWith(Email) {
+            email = correo
+            password = contrasena
+        }
+        return resultado?.id ?: throw Exception("Error al crear el usuario.")
+    }
+
+
+    suspend fun guardarPerfil(userId: String, nombre: String, telefono: String) {
+
+        val profile = Profile(user_id = userId, name = nombre,phone=telefono)
+        val resultado = client.postgrest["profile"].insert(listOf(profile)).decodeList<Profile>()
+        if (resultado.error != null) {
+            throw Exception("Error al guardar el perfil: ${resultado.error.message}")
+        }
+    }
+
+   suspend fun guardarProveedor(userId: String, especialidad: String, descripcion: String) {
+    // Recupera el profile_id desde la tabla profile
+
+           val profileResult = client.postgrest["profile"]
+               .select(columns = Columns.list("id")) {
+                   eq("user_id", userId)
+               }.decodeSingle<Map<String, Any?>>()
+       val proveedor = Proveedor(profile_id = profileId, speciality = especialidad,description=descripcion)
+       val insertResult = client.postgrest["providers"].insert(listOf(proveedor)).decodeList<Proveedor>()
+
+    if (profileResult.error != null || profileResult.data == null) {
+        throw Exception("Error al recuperar el profile_id: ${profileResult.error?.message ?: "No se encontró el profile"}")
+    }
+
+    val profileId = (profileResult.data as Map<String, Any>)["id"] as? Int
+        ?: throw Exception("Error al convertir el profile_id")
+
+    // Crear el objeto del proveedor
+
+       val proveedor = Proveedor(profile_id = profileId, speciality = especialidad,description=descripcion)
+       val insertResult = client.postgrest["providers"].insert(listOf(proveedor)).decodeList<Proveedor>()
+    if (insertResult.isEmpty()) {
+        throw Exception("Error al guardar el proveedor: ${insertResult}")
+    }
+}
+
+
+
     suspend fun obtenerUsuarioActual(): Usuario? {
         return try {
             // Recuperar el usuario actual
@@ -40,7 +91,7 @@ object SupabaseService {
                 return null
             }
 
-            // Consultar detalles del perfil en la tabla "profile" usando `filter`
+            // Consultar detalles del perfil en la tabla "profile" usando filter
             val perfilResponse = client.postgrest.from("profile").select {
                 filter {
                     eq("user_id", user.id)
@@ -94,6 +145,7 @@ object SupabaseService {
         } catch (e: Exception) {
             println("Error de autenticación: ${e.message}")
             return false
+            
         }
     }
 
